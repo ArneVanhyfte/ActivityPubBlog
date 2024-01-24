@@ -10,14 +10,14 @@ import {
 	query,
 	setDoc,
 	where,
-	load,
 	getDoc,
 } from "./deps.ts";
 import { Activity } from "./interfaces/activity.ts";
 import { User } from "./interfaces/user.ts";
 import admin from "npm:firebase-admin";
+const adminKey = Deno.env.get("ADMIN_KEY") as string;
 admin.initializeApp({
-	credential: admin.credential.cert("./AdminKey.json"),
+	credential: admin.credential.cert(JSON.parse(adminKey)),
 });
 const config = Deno.env.get("FIREBASE_CONFIG") as string;
 initializeApp(JSON.parse(config));
@@ -409,9 +409,6 @@ app.get("/.well-known/webfinger", async (c) => {
 		return c.text("User not found", 404);
 	}
 
-	// Construct the WebFinger response
-	const userDoc = querySnapshot.docs[0];
-	const userData = userDoc.data();
 	const webFingerResponse = {
 		subject: resource,
 		links: [
