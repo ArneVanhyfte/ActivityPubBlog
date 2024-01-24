@@ -15,9 +15,26 @@ import {
 import { Activity } from "./interfaces/activity.ts";
 import { User } from "./interfaces/user.ts";
 import admin from "npm:firebase-admin";
-const adminKey = Deno.env.get("ADMIN_KEY") as string;
+const adminKey = {
+	type: "service_account",
+	project_id: "activitypubblog-477d0",
+	private_key_id: Deno.env.get("PRIVATE_KEY_ID") as string,
+	private_key: Deno.env.get("PRIVATE_KEY") as string,
+	client_email: Deno.env.get("CLIENT_EMAIL") as string,
+	client_id: Deno.env.get("CLIENT_ID") as string,
+	auth_uri: "https://accounts.google.com/o/oauth2/auth",
+	token_uri: "https://oauth2.googleapis.com/token",
+	auth_provider_x509_cert_url:
+		"https://www.googleapis.com/oauth2/v1/certs",
+	client_x509_cert_url: Deno.env.get(
+		"CLIENT_X509_CERT_URL"
+	) as string,
+	universe_domain: "googleapis.com",
+};
 admin.initializeApp({
-	credential: admin.credential.cert(JSON.parse(adminKey)),
+	credential: admin.credential.cert(
+		adminKey as admin.ServiceAccount
+	),
 });
 const config = Deno.env.get("FIREBASE_CONFIG") as string;
 initializeApp(JSON.parse(config));
