@@ -11,32 +11,30 @@ import {
 	setDoc,
 	where,
 	getDoc,
+	load,
 } from "./deps.ts";
 import { Activity } from "./interfaces/activity.ts";
 import { User } from "./interfaces/user.ts";
 import admin from "npm:firebase-admin";
+const env = await load();
 const adminKey = {
 	type: "service_account",
 	project_id: "activitypubblog-477d0",
-	private_key_id: Deno.env.get("PRIVATE_KEY_ID") as string,
-	private_key: Deno.env.get("PRIVATE_KEY") as string,
-	client_email: Deno.env.get("CLIENT_EMAIL") as string,
-	client_id: Deno.env.get("CLIENT_ID") as string,
+	private_key_id: env["PRIVATE_KEY_ID"] as string,
+	private_key: env["PRIVATE_KEY"] as string,
+	client_email: env["CLIENT_EMAIL"] as string,
+	client_id: env["CLIENT_ID"] as string,
 	auth_uri: "https://accounts.google.com/o/oauth2/auth",
 	token_uri: "https://oauth2.googleapis.com/token",
 	auth_provider_x509_cert_url:
 		"https://www.googleapis.com/oauth2/v1/certs",
-	client_x509_cert_url: Deno.env.get(
-		"CLIENT_X509_CERT_URL"
-	) as string,
+	client_x509_cert_url: env["CLIENT_X509_CERT_URL"] as string,
 	universe_domain: "googleapis.com",
 };
 admin.initializeApp({
-	credential: admin.credential.cert(
-		adminKey as admin.ServiceAccount
-	),
+	credential: admin.credential.cert("./AdminKey.json"),
 });
-const config = Deno.env.get("FIREBASE_CONFIG") as string;
+const config = env["FIREBASE_CONFIG"] as string;
 initializeApp(JSON.parse(config));
 const db = getFirestore();
 const auth = getAuth();
@@ -232,7 +230,7 @@ app.post("/users/:username/outbox", async (c) => {
 			return c.text("You can only post to your own outbox", 403);
 		}
 
-		const baseUrl = Deno.env.get("BASE_URL") as string; // Get the base URL from environment
+		const baseUrl = env["BASE_URL"] as string; // Get the base URL from environment
 		const uniqueId = crypto.randomUUID(); // Unique ID for the activity
 		const publishedTimestamp = new Date().toISOString();
 		const attributedToUrl = `${baseUrl}/user/${username}`;
@@ -354,7 +352,7 @@ app.post("/users/:username/inbox", async (c) => {
 
 	// Generate a unique ID for the activity
 	const activityId = crypto.randomUUID();
-	const baseUrl = Deno.env.get("BASE_URL") as string; // Ensure BASE_URL is set in your environment
+	const baseUrl = env["BASE_URL"] as string; // Ensure BASE_URL is set in your environment
 	activity.id = `${baseUrl}/activities/${activityId}`; // Assign the ID to the activity
 
 	// Fetch the user's data from Firestore
@@ -407,7 +405,7 @@ app.get("/.well-known/webfinger", async (c) => {
 
 	const username = matches[1];
 	const domain = matches[2];
-	const baseUrl = Deno.env.get("BASE_URL") as string; // Your service's base URL
+	const baseUrl = env["BASE_URL"] as string; // Your service's base URL
 
 	// Validate if the domain matches your service's domain
 	if (domain !== new URL(baseUrl).hostname) {
