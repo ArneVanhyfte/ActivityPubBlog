@@ -19,8 +19,8 @@ import admin from "npm:firebase-admin";
 admin.initializeApp({
 	credential: admin.credential.cert("./AdminKey.json"),
 });
-const env = await load();
-initializeApp(JSON.parse(env["FIREBASE_CONFIG"]!));
+const config = Deno.env.get("FIREBASE_CONFIG") as string;
+initializeApp(JSON.parse(config));
 const db = getFirestore();
 const auth = getAuth();
 const app = new Hono();
@@ -215,7 +215,7 @@ app.post("/users/:username/outbox", async (c) => {
 			return c.text("You can only post to your own outbox", 403);
 		}
 
-		const baseUrl = env["BASE_URL"]; // Get the base URL from environment
+		const baseUrl = Deno.env.get("BASE_URL") as string; // Get the base URL from environment
 		const uniqueId = crypto.randomUUID(); // Unique ID for the activity
 		const publishedTimestamp = new Date().toISOString();
 		const attributedToUrl = `${baseUrl}/user/${username}`;
@@ -337,7 +337,7 @@ app.post("/users/:username/inbox", async (c) => {
 
 	// Generate a unique ID for the activity
 	const activityId = crypto.randomUUID();
-	const baseUrl = env["BASE_URL"]; // Ensure BASE_URL is set in your environment
+	const baseUrl = Deno.env.get("BASE_URL") as string; // Ensure BASE_URL is set in your environment
 	activity.id = `${baseUrl}/activities/${activityId}`; // Assign the ID to the activity
 
 	// Fetch the user's data from Firestore
@@ -364,7 +364,7 @@ app.post("/users/:username/inbox", async (c) => {
 		await setDoc(doc(db, "posts", postId), activity);
 		completeActivity = {
 			...activity,
-			object: postDocument,
+			object: activity.object,
 		};
 	}
 
@@ -390,7 +390,7 @@ app.get("/.well-known/webfinger", async (c) => {
 
 	const username = matches[1];
 	const domain = matches[2];
-	const baseUrl = env["BASE_URL"]; // Your service's base URL
+	const baseUrl = Deno.env.get("BASE_URL") as string; // Your service's base URL
 
 	// Validate if the domain matches your service's domain
 	if (domain !== new URL(baseUrl).hostname) {
