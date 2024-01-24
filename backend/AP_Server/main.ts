@@ -32,7 +32,9 @@ const adminKey = {
 	universe_domain: "googleapis.com",
 };
 admin.initializeApp({
-	credential: admin.credential.cert("./AdminKey.json"),
+	credential: admin.credential.cert(
+		adminKey as admin.ServiceAccount
+	),
 });
 const config = env["FIREBASE_CONFIG"] as string;
 initializeApp(JSON.parse(config));
