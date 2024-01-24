@@ -274,6 +274,11 @@ app.post("/users/:username/outbox", async (c) => {
 			// Optionally handle other activity types
 		}
 
+		if (!userData.liked) {
+			userData.liked = []; // Initialize if not already set
+		}
+		userData.liked.push(activity.object);
+
 		await setDoc(userRef, userData);
 
 		return c.text("Activity added to outbox", 201);

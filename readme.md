@@ -44,7 +44,7 @@ To start the backend server, run the following command:
 cd /backend/AP_Server
 deno task dev
 or
-deno run ./maint.ts
+deno run --allow-read --allow-net .\main.ts
 ```
 
 for linting run:
