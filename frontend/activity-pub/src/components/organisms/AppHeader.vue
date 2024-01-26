@@ -1,4 +1,7 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+	import { useAuthStore } from "@/stores/AuthStore";
+	const store = useAuthStore();
+</script>
 
 <template>
 	<header>
@@ -9,9 +12,14 @@
 			<h1>AP-Blog</h1>
 		</div>
 		<nav>
-			<ul>
-				<li><a href="/home"></a></li>
-				<li><a href="/logout"></a></li>
+			<ul
+				v-if="
+					$router.currentRoute.value.path === '/' ||
+					$router.currentRoute.value.path === '/add'
+				">
+				<li><a href="/home">Home</a></li>
+				<li><a href="/add">Add post</a></li>
+				<li><a @click.prevent="store.logOut">Logout</a></li>
 			</ul>
 		</nav>
 	</header>
@@ -25,6 +33,7 @@
 		padding-top: 1rem;
 		padding-left: 4rem;
 		padding-right: 4rem;
+		color: #222;
 	}
 	.logo {
 		display: flex;
@@ -33,7 +42,6 @@
 		gap: 0.2rem;
 
 		h1 {
-			color: #222;
 			font-size: 1.3rem;
 			font-style: normal;
 			font-weight: 500;
@@ -52,5 +60,12 @@
 		gap: 1rem;
 		font-weight: 500;
 		font-size: 1.3rem;
+		a {
+			color: #222;
+			text-decoration: none;
+		}
+		a:hover {
+			cursor: pointer;
+		}
 	}
 </style>

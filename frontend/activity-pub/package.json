@@ -12,9 +12,11 @@
   },
   "dependencies": {
     "axios": "^1.6.5",
+    "firebase": "^10.7.2",
     "pinia": "^2.1.7",
     "vue": "^3.3.11",
-    "vue-router": "^4.2.5"
+    "vue-router": "^4.2.5",
+    "vuefire": "^3.1.22"
   },
   "devDependencies": {
     "@tsconfig/node18": "^18.2.2",

@@ -6,6 +6,8 @@
 	import router from "@/router";
 	const email = ref("");
 	const password = ref("");
+	const confirmPassword = ref("");
+	const username = ref("");
 	const submitted = ref(false);
 	const emailError = computed(() => {
 		if (email.value === "" && submitted.value) {
@@ -21,26 +23,48 @@
 			return "";
 		}
 	});
+	const confirmPwError = computed(() => {
+		if (
+			password.value !== confirmPassword.value &&
+			submitted.value
+		) {
+			return "Passwords do not match";
+		} else {
+			return "";
+		}
+	});
+	const usernameError = computed(() => {
+		if (username.value === "" && submitted.value) {
+			return "Username is required";
+		} else {
+			return "";
+		}
+	});
 	const error = ref("");
 	const store = useAuthStore();
-	const signIn = async () => {
+	const signUp = async () => {
 		try {
-			console.log("signing in");
-			error.value = await store.signIn(
+			error.value = (await store.signUp(
 				email.value,
-				password.value
-			);
+				password.value,
+				username.value
+			)) as string;
 		} catch (err: any) {
-			console.log(err);
 			error.value = err.message;
 		}
 	};
-	const login = () => {
+	const register = () => {
 		submitted.value = true;
-		if (passwordError.value || emailError.value) {
+		if (
+			emailError.value ||
+			passwordError.value ||
+			confirmPwError.value ||
+			usernameError.value
+		) {
+			console.error("error");
 			return;
 		} else {
-			signIn();
+			signUp();
 		}
 	};
 </script>
@@ -48,6 +72,11 @@
 <template>
 	<form>
 		<div>
+			<FormField
+				name="Username"
+				type="text"
+				v-model="username"
+				:error="usernameError" />
 			<FormField
 				name="Email"
 				type="email"
@@ -58,14 +87,19 @@
 				type="password"
 				v-model="password"
 				:error="passwordError" />
+			<FormField
+				name="Confirm password"
+				type="password"
+				v-model="confirmPassword"
+				:error="confirmPwError" />
 		</div>
-		<AppButton @click.prevent="login()">Login</AppButton>
+		<AppButton @click.prevent="register()">Signup</AppButton>
 		<div id="signupInfo">
-			<p>Don't have an account yet?</p>
+			<p>Already have an account?</p>
 			<a
-				href="/signup"
-				@click.prevent="$router.push('/signup')">
-				Sign up</a
+				href="/login"
+				@click.prevent="$router.push('/login')">
+				Log in</a
 			>
 		</div>
 	</form>

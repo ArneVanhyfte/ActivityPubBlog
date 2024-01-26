@@ -13,34 +13,39 @@ import {
 	getDoc,
 	load,
 } from "./deps.ts";
+import { cors } from "https://deno.land/x/hono/middleware.ts";
 import { Activity } from "./interfaces/activity.ts";
 import { User } from "./interfaces/user.ts";
 import admin from "npm:firebase-admin";
+const text = await Deno.readTextFile("./AdminKey.json");
+const adminKey = JSON.parse(text);
 const env = await load();
-const adminKey = {
-	type: "service_account",
-	project_id: "activitypubblog-477d0",
-	private_key_id: env["PRIVATE_KEY_ID"] as string,
-	private_key: env["PRIVATE_KEY"] as string,
-	client_email: env["CLIENT_EMAIL"] as string,
-	client_id: env["CLIENT_ID"] as string,
-	auth_uri: "https://accounts.google.com/o/oauth2/auth",
-	token_uri: "https://oauth2.googleapis.com/token",
-	auth_provider_x509_cert_url:
-		"https://www.googleapis.com/oauth2/v1/certs",
-	client_x509_cert_url: env["CLIENT_X509_CERT_URL"] as string,
-	universe_domain: "googleapis.com",
-};
+// const adminKey = {
+// 	type: "service_account",
+// 	project_id: "activitypubblog-477d0",
+// 	private_key_id: env["PRIVATE_KEY_ID"] as string,
+// 	private_key: env["PRIVATE_KEY"] as string,
+// 	client_email: env["CLIENT_EMAIL"] as string,
+// 	client_id: env["CLIENT_ID"] as string,
+// 	auth_uri: "https://accounts.google.com/o/oauth2/auth",
+// 	token_uri: "https://oauth2.googleapis.com/token",
+// 	auth_provider_x509_cert_url:
+// 		"https://www.googleapis.com/oauth2/v1/certs",
+// 	client_x509_cert_url: env["CLIENT_X509_CERT_URL"] as string,
+// 	universe_domain: "googleapis.com",
+// };
 admin.initializeApp({
-	credential: admin.credential.cert(
-		adminKey as admin.ServiceAccount
-	),
+	credential: admin.credential.cert(adminKey),
 });
 const config = env["FIREBASE_CONFIG"] as string;
 initializeApp(JSON.parse(config));
 const db = getFirestore();
 const auth = getAuth();
 const app = new Hono();
+const corsOptions = {
+	origin: "*",
+};
+app.use("/*", cors(corsOptions));
 
 app.post("signup", async (c) => {
 	try {
@@ -208,18 +213,17 @@ app.get("/users/:username/outbox", async (c) => {
 app.post("/users/:username/outbox", async (c) => {
 	try {
 		const username = c.req.param("username");
-		const activity: Activity = await c.req.body();
+		const activity: Activity = await c.req.text();
 		const idToken = c.req.headers.get("authorization"); // Get the authorization header
 
-		// Verify the ID token using firebase-admin
 		const decodedToken = await admin
 			.auth()
 			.verifyIdToken(idToken);
 		if (!decodedToken || decodedToken.uid === undefined) {
 			return c.text("Invalid token", 403);
 		}
+		console.log("na verification");
 
-		// Fetch the user's data from Firestore
 		const userRef = doc(db, `users/${decodedToken.uid}`);
 		const userSnap = await getDoc(userRef);
 
@@ -245,6 +249,7 @@ app.post("/users/:username/outbox", async (c) => {
 				published: publishedTimestamp,
 				attributedTo: attributedToUrl,
 			};
+			console.log("voor setDoc");
 			await setDoc(doc(db, "posts", uniqueId), postDocument);
 
 			const completeActivity = {
@@ -255,7 +260,6 @@ app.post("/users/:username/outbox", async (c) => {
 			userData.outbox.push(completeActivity);
 			await setDoc(userRef, userData);
 		} else if (activity.type === "Like") {
-			// Handle 'Like' activity
 			const likeActivity = {
 				"@context": "https://www.w3.org/ns/activitystreams",
 				id: `${baseUrl}/activities/${uniqueId}`,
@@ -273,7 +277,7 @@ app.post("/users/:username/outbox", async (c) => {
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
-						Authorization: "Bearer " + decodedToken, // Insert appropriate token
+						Authorization: "Bearer " + decodedToken,
 					},
 					body: JSON.stringify(likeActivity),
 				});
